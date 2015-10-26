@@ -1,7 +1,7 @@
 ;; Derived from python.el by Fabián E. Gallina.
 ;; Modifications by Allen Short.
 ;; This file is licensed under the GPLv3; see <http://www.gnu.org/licenses/>.
-
+(provide 'monte-indent)
 (eval-when-compile
   (defun monte-syntax--context-compiler-macro (form type &optional syntax-ppss)
     (pcase type

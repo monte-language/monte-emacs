@@ -1,6 +1,6 @@
 ;; monte.el -- support for editing Monte code -*- lexical-binding: t -*-
 ;; copyright 2015 Allen Short, available under MIT license (see LICENSE)
-
+(provide 'monte)
 ;;;###autoload
 (add-to-list 'auto-mode-alist (cons "\\.mt\\'" 'monte-mode))
 
@@ -16,13 +16,13 @@
   :type 'integer
   :safe 'integerp)
 
-(load "./monte-indent")
+(require 'monte-indent)
 
 (defvar monte-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [remap forward-sentence] 'monte-nav-forward-block)
     (define-key map [remap backward-sentence] 'monte-nav-backward-block)
-    (define-key map "\177" 'monde-indent-dedent-line-backspace)
+    (define-key map "\177" 'monte-indent-dedent-line-backspace)
     (define-key map (kbd "<backtab>") 'monte-indent-dedent-line)
     map)
   "Keymap for monte-mode.")
