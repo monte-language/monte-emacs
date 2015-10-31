@@ -37,56 +37,64 @@ is used to limit the scan."
      (syntax-class (string-to-syntax ")"))))
 
 (eval-when-compile
-  (defconst monte-rx-constituents
-    `((block-start          . ,(rx symbol-start
-                                   (or "def" "object" "if" "else if" "else"
-                                       "try" "catch" "escape" "finally" "for"
-                                       "match" "method" "to" "while" "when")
-                                   symbol-end))
-      (dedenter            . ,(rx symbol-start
-                                   (or "else if" "else" "catch" "finally")
-                                   symbol-end))
-      (block-ender         . ,(rx symbol-start
-                                  (or
-                                   "break" "continue" "pass" "return")
-                                  symbol-end))
-      (defun                . ,(rx symbol-start (or "def" "object") symbol-end))
-      (symbol-name          . ,(rx (any letter ?_) (* (any word ?_))))
-      (open-paren           . ,(rx (or "{" "[" "(")))
-      (close-paren          . ,(rx (or "}" "]" ")")))
-      (simple-operator      . ,(rx (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?% ?!)))
-      ;; FIXME: rx should support (not simple-operator).
-      (not-simple-operator  . ,(rx
-                                (not
-                                 (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?% ?!))))
-      ;; FIXME: Use regexp-opt.
-      (operator             . ,(rx (or "+" "-" "/" "&" "^" "~" "|" "*" "<" ">"
-                                       "=" "%" "**" "//" "<<" ">>" "<=" "!="
-                                       "==" ">=" "&!")))
-      ;; FIXME: Use regexp-opt.
-      (assignment-operator  . ,(rx (or "=" "+=" "-=" "*=" "/=" "//=" "%=" "**="
-                                       ">>=" "<<=" "&=" "^=" "|=" (and word "="))))
-      (string-delimiter . ,(rx (and
-                                ;; Match even number of backslashes.
-                                (or (not (any ?\\ ?\' ?\")) point
-                                    ;; Quotes might be preceded by a escaped quote.
-                                    (and (or (not (any ?\\)) point) ?\\
-                                         (* ?\\ ?\\) (any ?\' ?\")))
-                                (* ?\\ ?\\)
-                                ;; Match single quotes of any kind.
-                                (group (or  "\"" "'" "`"))))))
-    "Additional Monte specific sexps for `monte-rx'")
+  (let* ((string-literal
+          (rx ?\" (*? (or (seq ?\\ (any "\"'btnfr\\\n"))
+                          (not (any "\\\"")))) ?\"))
+         (noun
+          (rx-to-string `(or (seq (any letter ?_) (* (any word ?_)))
+                             (seq "::" (regexp ,string-literal))))))
+    (defconst monte-rx-constituents
+      `((block-start          . ,(rx-to-string
+                                  `(: symbol-start
+                                      (or (: (or "def" "bind" "def bind") ,noun ?\()
+                                          "object" "if" "else if" "else"
+                                          "try" "catch" "escape" "finally" "for"
+                                          "match" "method" "to" "while" "when")
+                                      symbol-end)))
+        (dedenter            . ,(rx symbol-start
+                                    (or "else if" "else" "catch" "finally")
+                                    symbol-end))
+        (block-ender         . ,(rx symbol-start
+                                    (or
+                                     "break" "continue" "pass" "return")
+                                    symbol-end))
+        (defun                . ,(rx symbol-start (or "def" "object") symbol-end))
+        (symbol-name          . ,noun)
+        (open-paren           . ,(rx (or "{" "[" "(")))
+        (close-paren          . ,(rx (or "}" "]" ")")))
+        (simple-operator      . ,(rx (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?% ?!)))
+        ;; FIXME: rx should support (not simple-operator).
+        (not-simple-operator  . ,(rx
+                                  (not
+                                   (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?% ?!))))
+        ;; FIXME: Use regexp-opt.
+        (operator             . ,(rx (or "+" "-" "/" "&" "^" "~" "|" "*" "<" ">"
+                                         "=" "%" "**" "//" "<<" ">>" "<=" "!="
+                                         "==" ">=" "&!")))
+        ;; FIXME: Use regexp-opt.
+        (assignment-operator  . ,(rx (or "=" "+=" "-=" "*=" "/=" "//=" "%=" "**="
+                                         ">>=" "<<=" "&=" "^=" "|=" (and word "="))))
+        (string-delimiter . ,(rx (and
+                                  ;; Match even number of backslashes.
+                                  (or (not (any ?\\ ?\' ?\")) point
+                                      ;; Quotes might be preceded by a escaped quote.
+                                      (and (or (not (any ?\\)) point) ?\\
+                                           (* ?\\ ?\\) (any ?\' ?\")))
+                                  (* ?\\ ?\\)
+                                  ;; Match single quotes of any kind.
+                                  (group (or  "\"" "'" "`"))))))
+      "Additional Monte specific sexps for `monte-rx'")
 
-  (defmacro monte-rx (&rest regexps)
-    "Monte mode specialized rx macro.
+    (defmacro monte-rx (&rest regexps)
+      "Monte mode specialized rx macro.
 This variant of `rx' supports common Monte named REGEXPS."
-    (let ((rx-constituents (append monte-rx-constituents rx-constituents)))
-      (cond ((null regexps)
-             (error "No regexp"))
-            ((cdr regexps)
-             (rx-to-string `(and ,@regexps) t))
-            (t
-             (rx-to-string (car regexps) t))))))
+      (let ((rx-constituents (append monte-rx-constituents rx-constituents)))
+        (cond ((null regexps)
+               (error "No regexp"))
+              ((cdr regexps)
+               (rx-to-string `(and ,@regexps) t))
+              (t
+               (rx-to-string (car regexps) t)))))))
 
 (defun monte-indent-context ()
   "Get information about the current indentation context.
@@ -1169,30 +1177,6 @@ since it returns nil if point is not inside a defun."
         (and names
              (concat (and type (format "%s " type))
                      (mapconcat 'identity names ".")))))))
-
-(defun monte-info-current-symbol (&optional replace-self)
-  "Return current symbol using dotty syntax.
-With optional argument REPLACE-SELF convert \"self\" to current
-parent defun name."
-  (let ((name
-         (and (not (monte-syntax-comment-or-string-p))
-              (with-syntax-table monte-dotty-syntax-table
-                (let ((sym (symbol-at-point)))
-                  (and sym
-                       (substring-no-properties (symbol-name sym))))))))
-    (when name
-      (if (not replace-self)
-          name
-        (let ((current-defun (monte-info-current-defun)))
-          (if (not current-defun)
-              name
-            (replace-regexp-in-string
-             (monte-rx line-start word-start "self" word-end ?.)
-             (concat
-              (mapconcat 'identity
-                         (butlast (split-string current-defun "\\."))
-                         ".") ".")
-             name)))))))
 
 (defun monte-info-statement-starts-block-p ()
   "Return non-nil if current statement opens a block."
