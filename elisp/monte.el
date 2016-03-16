@@ -16,6 +16,7 @@
   :type 'integer
   :safe 'integerp)
 
+(require 'flycheck)
 (require 'monte-indent)
 
 (defvar monte-mode-map
@@ -31,7 +32,7 @@
   `(,(rx symbol-start
          (or "as" "bind" "break" "catch" "continue" "def" "else" "escape"
              "exit" "extends" "exports" "finally" "fn" "for" "guards" "if"
-             "implements" "in" "interface" "match" "meta" "method" "module"
+             "implements" "import" "in" "interface" "match" "meta" "method"
              "object" "pass" "pragma" "return" "switch" "to" "try" "var"
              "via" "when" "while")
          symbol-end)
@@ -68,3 +69,16 @@
   (set (make-local-variable 'font-lock-defaults) '(monte-font-lock-keywords nil nil nil nil))
   (set (make-local-variable 'indent-line-function) 'monte-indent-line-function)
   (setq-local electric-indent-inhibit t))
+
+
+(flycheck-define-checker monte-lint
+  "Syntax and scope checking for Monte."
+  :command ("mt" "lint" "-stdin" source-original)
+  :standard-input t
+  :modes (monte-mode)
+  :error-patterns
+  ((error line-start (file-name) ":" line "." column
+           "-" (+ digit) "." (+ digit)
+           ": " (message))))
+
+(add-to-list 'flycheck-checkers 'monte-lint)
