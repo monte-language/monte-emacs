@@ -1,4 +1,4 @@
-;; monte.el -- support for editing Monte code -*- lexical-binding: t -*-
+;; monte.el --- support for editing Monte code -*- lexical-binding: t -*-
 ;; copyright 2015 Allen Short, available under MIT license (see LICENSE)
 (provide 'monte)
 ;;;###autoload
