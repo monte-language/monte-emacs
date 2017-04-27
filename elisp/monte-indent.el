@@ -45,13 +45,14 @@ is used to limit the scan."
                              (seq "::" (regexp ,string-literal))))))
     (defconst monte-rx-constituents
       `((block-start          . ,(rx-to-string
-                                  `(or (: symbol-start
+                                  `(or (: (opt "return" (+ space)) symbol-start
                                           (or "object" "if" "else if" "else"
-                                              "try" "catch" "escape" "finally" "for"
-                                              "match" "method" "to" "while" "when")
+                                              "try" "catch" "escape" "finally"
+                                              "for" "interface" "match"
+                                              "method" "to" "while" "when")
                                           symbol-end)
                                        (: (or "def" "bind" "def bind")
-                                          (+ space) (regexp ,noun) ?\())))
+                                          (+ space) (regexp ,noun) (* space) (or ?\( "as" "implements")))))
         (dedenter            . ,(rx symbol-start
                                     (or "else if" "else" "catch" "finally")
                                     symbol-end))
