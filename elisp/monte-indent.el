@@ -49,7 +49,8 @@ is used to limit the scan."
                                           (or "object" "if" "else if" "else"
                                               "try" "catch" "escape" "finally"
                                               "for" "interface" "match"
-                                              "method" "to" "while" "when")
+                                              "method" "switch" "to" "while"
+                                              "when")
                                           symbol-end)
                                        (: (or "def" "bind" "def bind")
                                           (+ space) (regexp ,noun) (* space) (or ?\( "as" "implements")))))
@@ -275,7 +276,9 @@ keyword
        ((let ((start (save-excursion
                        (back-to-indentation)
                        (monte-util-forward-comment -1)
-                       (when (equal (char-before) ?:)
+                       (when (or (equal (char-before) ?:)
+                                 (and (equal (char-before) ?>)
+                                      (equal (char-before (- (point) 1)) ?-)))
                          (monte-nav-beginning-of-block)))))
           (when start
             (cons :after-block-start start))))
@@ -1247,10 +1250,10 @@ likely an invalid python file."
     (let ((dedenter-pos (monte-info-dedenter-statement-p)))
       (when dedenter-pos
         (goto-char dedenter-pos)
-        (let* ((pairs '(("elif" "elif" "if")
-                        ("else" "if" "elif" "except" "for" "while")
-                        ("except" "except" "try")
-                        ("finally" "else" "except" "try")))
+        (let* ((pairs '(("else if" "else if" "if")
+                        ("else" "if" "else if" "except" "for" "while")
+                        ("catch" "catch" "try" "when")
+                        ("finally" "catch" "try")))
                (dedenter (match-string-no-properties 0))
                (possible-opening-blocks (cdr (assoc-string dedenter pairs)))
                (collected-indentations)
