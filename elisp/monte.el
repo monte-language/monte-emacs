@@ -77,7 +77,10 @@
   :standard-input t
   :modes (monte-mode)
   :error-patterns
-  ((error line-start (file-name) ":" line "." column
+  ((warning line-start (file-name) ":" line "." column
+           "-" (+ digit) "." (+ digit)
+           ": " (message (: "Unused name " (one-or-more not-newline))))
+   (error line-start (file-name) ":" line "." column
            "-" (+ digit) "." (+ digit)
            ": " (message))))
 
