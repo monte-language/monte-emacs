@@ -1,4 +1,4 @@
-import "devbot/amp" =~ [=> makeAMPServer :DeepFrozen]
+import "amp" =~ [=> makeAMPServer :DeepFrozen]
 import "lib/entropy/entropy" =~ [=> makeEntropy :DeepFrozen]
 import "lib/entropy/pcg" =~ [=> makePCG :DeepFrozen]
 exports (main)

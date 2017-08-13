@@ -1,6 +1,6 @@
 {
     "name": "devbot",
     "paths": ["devbot"],
-    "entrypoint": "devbot/repl-server",
+    "entrypoint": "repl-server",
     "dependencies": {}
 }
