@@ -73,8 +73,7 @@
 
 (flycheck-define-checker monte-lint
   "Syntax and scope checking for Monte."
-  :command ("monte" "lint" "-stdin" source-original)
-  :standard-input t
+  :command ("monte" "lint" source-inplace)
   :modes (monte-mode)
   :error-patterns
   ((warning line-start (file-name) ":" line "." column
